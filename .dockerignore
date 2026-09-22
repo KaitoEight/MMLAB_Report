@@ -1,0 +1,12 @@
+.git
+.env
+secrets
+backups
+data
+**/node_modules
+**/dist
+**/__pycache__
+**/.pytest_cache
+**/*.sqlite3
+**/.venv
+backend/tests
