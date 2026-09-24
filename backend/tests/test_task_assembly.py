@@ -31,7 +31,7 @@ def test_dates_duplicate_lines_and_distinct_people():
     a=paper(id='a',type='Báo cáo tháng',memberIds=[7],monthlyTasks={'done':[common]})
     b=paper(id='b',type='Báo cáo tháng',memberIds=[3],monthlyTasks={'done':[common]})
     result=compose([a,b],'2026-09')
-    assert result['sections']['aOther'].count('Thực hiện đề tài nghiên cứu')==2
+    assert result['sections']['a1'].count('Thực hiện đề tài nghiên cứu')==2
 
 
 def test_bullet_and_action_boundaries_not_joined():
@@ -40,7 +40,7 @@ def test_bullet_and_action_boundaries_not_joined():
     assert repair_tasks(tasks,join_wrapped=False)==tasks
     r=paper(type='Báo cáo tháng',monthlyTasksVersion=2,monthlyTasks={'done':tasks})
     result=compose([r],'2026-09')
-    assert result['sections']['aOther'].count('(Chế Quang Huy)')==3
+    assert result['sections']['a1'].count('(Chế Quang Huy)')==3
 
 
 def test_monthly_parser_does_not_drop_seminar_or_continuation_labels():
@@ -60,10 +60,12 @@ def test_unknown_sender_excluded_from_school_and_required_sections_present():
     assert len(result['reviewNotes'])==1
     texts={v:'\n'.join(p.text for p in Document(io.BytesIO(docx_bytes(result,v))).paragraphs) for v in ('discussion','school')}
     assert 'unknown@example.com' in texts['discussion'] and 'unknown@example.com' not in texts['school']
-    assert 'Phần A.1' in texts['school'] and 'Robotics' in texts['school']
+    assert 'Phần A.1' in texts['school'] and 'Robotics' not in texts['school']
+    assert 'Robotics' in texts['discussion'] and 'Đi học PhD' in texts['discussion']
+    assert 'Đi học PhD' not in texts['school']
     assert 'Chưa có nội dung báo cáo' not in texts['school']
     assert 'chưa phân nhóm' not in texts['school']
-    assert 'Seminar và hội nghị' in texts['school']
+    assert 'Seminar và hội nghị' not in texts['school']
 
 
 def test_no_paper_status_inferred_from_monthly_manuscript_or_revision():

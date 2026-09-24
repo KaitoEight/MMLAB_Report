@@ -1,0 +1,17 @@
+{
+  "new_files": [
+    "backend/monthly_layout.py",
+    "backend/tests/test_paired_monthly.py"
+  ],
+  "changed_files": [
+    "backend/monthly_assembly.py",
+    "backend/monthly_layout.py",
+    "backend/monthly_report.py",
+    "backend/monthly_service.py",
+    "backend/tests/test_auto_receipt.py",
+    "backend/tests/test_monthly.py",
+    "backend/tests/test_paired_monthly.py",
+    "backend/tests/test_task_assembly.py",
+    "frontend/src/MonthlyReports.tsx"
+  ]
+}

@@ -68,7 +68,8 @@ def test_compose_deduplicates_and_uses_receipt_period():
     assert r['counts']['acceptedConference']==1 and r['counts']['unknownPaperStatus']==1
     assert r['sections']['a1'].count(one['title'])==1
     assert 'Nguyễn Vinh Tiệp' in r['sections']['a1'] and 'Chế Quang Huy' in r['sections']['a1']
-    assert 'Được chấp nhận 1 bài báo hội nghị.' in r['sections']['a1']
+    assert 'Được chấp nhận' not in r['sections']['a1']
+    assert r['sections']['a1']==r['sections']['a2'] and r['sections']['b1']==r['sections']['b2']
     assert 'Hoàn tất bộ dữ liệu' in r['sections']['a2'] and 'Sẽ tổ chức seminar' in r['sections']['b2']
     assert r['planPeriod']=='2026-10' and r['records']==5
 
@@ -77,10 +78,10 @@ def doc_text(content):return '\n'.join(p.text for p in Document(io.BytesIO(conte
 
 
 def test_docx_variants_and_blank_dates():
-    r=compose([],'2026-12');r['sections'].update(a1='ĐÃ-HOÀN-TẤT',b1='SẼ-THỰC-HIỆN')
+    r=compose([],'2026-12');r['sections'].update(a1='KPI bài báo: hoàn thành 02 bài báo Scopus',b1='KPI bài báo: nộp 03 bài tạp chí Q1')
     discussion=doc_text(docx_bytes(r,'discussion'));school=doc_text(docx_bytes(r,'school'))
-    assert 'ĐÃ-HOÀN-TẤT' in discussion and 'ĐÃ-HOÀN-TẤT' in school
-    assert 'Phần A.1' in school and 'Phần A.2' in school and 'SẼ-THỰC-HIỆN' in school and 'THÁNG 01/2027' in school
+    assert 'hoàn thành 02 bài báo Scopus' in discussion and 'Scopus: 2 bài.' in school
+    assert 'Phần A.1' in school and 'Phần A.2' in school and 'nộp 03 bài tạp chí Q1' in school and 'THÁNG 01/2027' in school
     template=doc_text(blank_template('school'))
     assert 'THÁNG …/……' in template and 'Ngày … tháng … năm ……' in template
 
@@ -96,10 +97,12 @@ def scheduled(client,monkeypatch):
     monkeypatch.setenv('MONTHLY_REPORTS_ENABLED','true');monkeypatch.setenv('MAIL_MODE','preview')
     with store.mutation() as c:
         for table in (service.deliveries,service.batches,service.drafts):c.execute(table.delete())
+        c.execute(store.workflow_settings.delete().where(store.workflow_settings.c.key.like('school_kpi:%')))
         c.execute(update(store.workflow_settings).where(store.workflow_settings.c.key=='monthly_started').values(value='2026-09-01T00:00:00+07:00'))
     yield client
     with store.mutation() as c:
         for table in (service.deliveries,service.batches,service.drafts):c.execute(table.delete())
+        c.execute(store.workflow_settings.delete().where(store.workflow_settings.c.key.like('school_kpi:%')))
 
 
 def test_schedule_timezone_restart_catchup_and_no_duplicates(scheduled,monkeypatch):
@@ -140,7 +143,7 @@ def test_admin_monthly_edit_conflicts_download_and_saved_snapshot(scheduled):
     assert c.get('/api/monthly/2026-09/school.docx').status_code==401
     login(c);assert c.get('/api/monthly/2026-99').status_code==422
     r=c.get('/api/monthly/2026-09').json()
-    body={k:r[k] for k in ('revision','strategyLabel','signatory','sections')};body['sections']['b1']='Sẽ báo cáo seminar đã thống nhất'
+    body={k:r[k] for k in ('revision','strategyLabel','signatory','sections')};body['sections']['b1']='01 NCS sẽ báo cáo chuyên đề 3'
     assert c.put('/api/monthly/2026-09',json=body).status_code==403
     assert c.put('/api/monthly/2026-09',json=body,headers={'Origin':'http://testserver'}).status_code==200
     assert c.put('/api/monthly/2026-09',json=body,headers={'Origin':'http://testserver'}).status_code==409

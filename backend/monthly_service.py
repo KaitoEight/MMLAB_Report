@@ -2,8 +2,10 @@
 import base64
 import calendar
 import hashlib
+import json
 import os
 import time
+from typing import Literal
 from datetime import datetime
 from sqlalchemy import Table, Column, String, JSON, Integer, Float, select, update
 from pydantic import BaseModel, ConfigDict, Field
@@ -12,6 +14,9 @@ import store
 import mailer
 from monthly_report import VN, SECTIONS, compose, docx_bytes, validate_period, DEFAULT_STRATEGY
 from mmlab_pipeline.members import DIRECTORY
+from monthly_layout import paired_report, LAYOUT
+from school_report import with_statistics
+from school_statistics import prior_papers
 
 drafts=Table('monthly_drafts',store.meta,Column('period',String,primary_key=True),Column('payload',JSON,nullable=False),Column('revision',Integer,nullable=False))
 batches=Table('monthly_batches',store.meta,Column('period',String,primary_key=True),Column('payload',JSON,nullable=False),Column('created_at',String,nullable=False))
@@ -25,6 +30,8 @@ class DraftEdit(BaseModel):
     strategyLabel:str=Field(min_length=1,max_length=300)
     signatory:str=Field(min_length=1,max_length=200)
     sections:dict[str,str]
+    scopusTarget:int|None=Field(default=None,ge=1,le=100000)
+    paperScope:Literal['month','year']='month'
 
 
 def due_date(year,month):
@@ -53,22 +60,34 @@ def read_draft(period, conn=None, fresh=False):
     if conn is None:
         with store.engine.connect() as c:return read_draft(period,c,fresh)
     saved=conn.execute(select(drafts).where(drafts.c.period==period)).mappings().first()
+    records=conn.execute(select(store.reports.c.payload).where(store.reports.c.mailbox==store.mailbox())).scalars().all()
     if saved and not fresh:
         report={**saved['payload'],'revision':saved['revision'],'customized':True}
         if report['strategyLabel']=='KHCL Trường giai đoạn 2021-2025':report['strategyLabel']=DEFAULT_STRATEGY
-        return report
-    records=conn.execute(select(store.reports.c.payload).where(store.reports.c.mailbox==store.mailbox())).scalars().all()
-    return {**compose(records,period),'revision':saved['revision'] if saved else 0,'customized':False}
+        report['paperHistory']=prior_papers(records,period)
+        return with_statistics(report)
+    report={**compose(records,period),'revision':saved['revision'] if saved else 0,'customized':False}
+    defaults=conn.execute(select(store.workflow_settings.c.value).where(store.workflow_settings.c.key==f'school_kpi:{store.mailbox()}:{period[:4]}')).scalar_one_or_none()
+    if defaults:report.update(json.loads(defaults))
+    return with_statistics(report)
 
 
 def save_draft(period,data):
     validate_period(period)
-    if set(data.sections)!=set(SECTIONS) or any(len(v)>100000 for v in data.sections.values()):
+    if set(data.sections) not in ({'a1','b1'},set(SECTIONS)) or any(len(v)>100000 for v in data.sections.values()):
         raise HTTPException(422,'Nội dung các phần chưa đúng hoặc quá dài.')
     with store.mutation() as conn:
         report=read_draft(period,conn)
         if data.revision!=report['revision']:raise HTTPException(409,'Báo cáo tháng vừa thay đổi. Hãy tải lại.')
-        report.update(strategyLabel=data.strategyLabel,signatory=data.signatory,sections=data.sections,revision=data.revision+1,customized=True)
+        sections={**report['sections'],'a1':data.sections['a1'],'b1':data.sections['b1']}
+        report.update(strategyLabel=data.strategyLabel,signatory=data.signatory,sections=sections,layoutVersion=LAYOUT,revision=data.revision+1,customized=True)
+        for key in ('scopusTarget','paperScope'):
+            if key in data.model_fields_set:report[key]=getattr(data,key)
+        report=with_statistics(report)
+        if report['paperScope']=='year' and {'paperScope','scopusTarget'} & data.model_fields_set:
+            defaults=json.dumps({'paperScope':'year','scopusTarget':report['scopusTarget']})
+            pref=store.insert(store.workflow_settings).values(key=f'school_kpi:{store.mailbox()}:{period[:4]}',value=defaults)
+            conn.execute(pref.on_conflict_do_update(index_elements=['key'],set_={'value':pref.excluded.value}))
         stmt=store.insert(drafts).values(period=period,payload=report,revision=report['revision'])
         conn.execute(stmt.on_conflict_do_update(index_elements=['period'],set_={'payload':stmt.excluded.payload,'revision':stmt.excluded.revision}))
     return report
@@ -87,7 +106,7 @@ def enqueue_due(now=None):
         attachments=[{'name':f'mmlab-{report["planPeriod"]}-{variant}.docx','content':base64.b64encode(docx_bytes(report,variant)).decode(),
                       'subtype':'vnd.openxmlformats-officedocument.wordprocessingml.document'} for variant in ('discussion','school')]
         payload={'subject':f'[MMLab] Báo cáo thảo luận và kế hoạch tháng {report["planPeriod"]}',
-                 'body':f'Kính gửi các thành viên MMLab,\n\nĐính kèm hai bản báo cáo:\n1. Bản thảo luận: công việc đã thực hiện tháng {period} và kế hoạch tháng {report["planPeriod"]}.\n2. Bản báo cáo nộp trường: A.1, A.2, B.1, B.2 và kiến nghị; đơn vị mã 6, chiến lược 2021–2030.\n\nVui lòng trao đổi và bổ sung các nội dung chưa phân nhóm hoặc còn thiếu.\n\nTrân trọng,\nMMLab — UIT',
+                 'body':f'Kính gửi các thành viên MMLab,\n\nĐính kèm hai bản báo cáo:\n1. Bản thảo luận: công việc đã thực hiện tháng {period} và kế hoạch tháng {report["planPeriod"]}.\n2. Bản báo cáo nộp trường: thống kê ngắn gọn bài báo, NCS và đề tài; Đã ở A.1 = A.2, Sẽ ở B.1 = B.2; đơn vị mã 6, chiến lược 2021–2030.\n\nVui lòng trao đổi về kết quả và kế hoạch công việc.\n\nTrân trọng,\nMMLab — UIT',
                  'attachments':attachments}
         conn.execute(store.insert(batches).values(period=period,payload=payload,created_at=now.isoformat()))
         assert len(DIRECTORY)==12 and len({m['email'] for m in DIRECTORY})==12

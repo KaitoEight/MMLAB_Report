@@ -83,13 +83,15 @@ def test_migration_idempotent_no_historical_send_and_deleted_stay_deleted(workfl
 
 def test_school_form_sections_unit_strategy_month_and_no_invented_targets():
     r=compose([paper(taskGroup='unassigned',date='2026-07-15')],'2026-07')
-    r['sections'].update(bOther='Chuẩn bị hồ sơ nghiên cứu sinh',recommendations='Đề nghị hỗ trợ máy tính')
+    r['sections'].update(b1='Chuẩn bị hồ sơ nghiên cứu sinh',recommendations='Đề nghị hỗ trợ máy tính')
     original=copy.deepcopy(r)
     text=doc_text(docx_bytes(r,'school'))
-    for expected in ('THÁNG 08/2026','Mã đơn vị: 6','Phần A.1','Phần A.2','Phần B.1','Phần B.2','Phần 3','2021-2030','KH2026','Đề nghị hỗ trợ máy tính'):
+    for expected in ('THÁNG 08/2026','Mã đơn vị: 6','Phần A.1','Phần A.2','Phần B.1','Phần B.2','2021-2030','KH2026'):
         assert expected in text
-    assert text.count('A study of realistic video retrieval')==1
+    assert 'A study of realistic video retrieval' not in text
+    assert text.count('Scopus: 1 bài.')==2
     a1=text.split('Phần A.1')[1].split('Phần A.2')[0]
-    assert 'A study of realistic video retrieval' not in a1
+    assert 'Scopus: 1 bài.' in a1
+    assert 'Phần 3' not in text and 'Đề nghị hỗ trợ máy tính' not in text
     assert '46 / 44' not in text and '2021-2025' not in text
     assert r==original  # School output must not modify saved discussion data.

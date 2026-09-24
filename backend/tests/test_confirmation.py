@@ -152,6 +152,9 @@ def test_smtp_envelope_is_only_forwarder_and_auto_reply_headers(workflow,monkeyp
     assert captured['to']==['student@gmail.com']
     assert captured['message']['Auto-Submitted']=='auto-replied'
     assert captured['message']['In-Reply-To']=='<outer-message@test.example>'
+    assert captured['message']['Subject']=='Re: Fwd: Paper decision'
+    assert captured['message']['References']=='<outer-message@test.example>'
+    assert captured['message']['Message-ID']!='<outer-message@test.example>'
 
 
 def test_historical_manual_confirmation_is_idempotent_and_survives_rescan(workflow, monkeypatch):

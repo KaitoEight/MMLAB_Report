@@ -66,6 +66,8 @@ def init_db():
 
     from receipt_policy import migrate
     migrate()
+    from mail_threading import migrate_pending
+    migrate_pending()
 
 
 def state():

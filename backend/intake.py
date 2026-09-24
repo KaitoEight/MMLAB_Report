@@ -54,9 +54,10 @@ def validation(fields):
 
 
 def mail_content(row, link):
+    from mail_threading import reply_headers
     _, errors = validation(row['fields'])
     lines = ['Chào bạn,', '', 'MMLab đã tự động ghi nhận Paper bạn chuyển tiếp.',
-             'Bạn không cần xác nhận lại. Dưới đây là thông tin đã được lưu:',
+             'Dưới đây là thông tin đã được lưu:',
              f"Mã tiếp nhận: {row['id'][:12]}", '', 'Type of Report: Paper']
     lines += [f"{LABELS[key]}: {row['fields'][key] or '[CHƯA CÓ THÔNG TIN]'}" for key in FIELDS]
     lines += ['Status: ' + (row['original'].get('status') or 'Chưa xác định')]
@@ -70,9 +71,7 @@ def mail_content(row, link):
               'Link riêng cho báo cáo này, có hiệu lực 7 ngày.',
               '', 'Tự động ghi nhận không đồng nghĩa bài báo đã được hội nghị/tạp chí chấp nhận. '
               'Index/Ranking được lưu theo thông tin khai báo.', '', 'MMLab — UIT']
-    return {'subject': f"[MMLab] Đã ghi nhận Paper #{row['id'][:12]}",
-            'body': '\n'.join(lines), 'link': link,
-            'in_reply_to': row['original'].get('messageId', '')}
+    return {**reply_headers(row['original']), 'body': '\n'.join(lines), 'link': link}
 
 
 def receipt_block_reason(conn, report, include_cutoff=True):

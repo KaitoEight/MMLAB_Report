@@ -1,0 +1,19 @@
+{
+  "new_files": [
+    "backend/school_statistics.py",
+    "backend/tests/test_school_statistics.py"
+  ],
+  "changed_files": [
+    "backend/monthly_report.py",
+    "backend/monthly_service.py",
+    "backend/school_report.py",
+    "backend/school_statistics.py",
+    "backend/tests/test_auto_receipt.py",
+    "backend/tests/test_monthly.py",
+    "backend/tests/test_paired_monthly.py",
+    "backend/tests/test_school_filter.py",
+    "backend/tests/test_school_statistics.py",
+    "backend/tests/test_task_assembly.py",
+    "frontend/src/MonthlyReports.tsx"
+  ]
+}

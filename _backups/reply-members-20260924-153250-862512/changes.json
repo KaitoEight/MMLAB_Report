@@ -1,0 +1,25 @@
+{
+  "new_files": [
+    "backend/discussion_report.py",
+    "backend/mail_threading.py",
+    "backend/tests/test_reply_members.py"
+  ],
+  "changed_files": [
+    "backend/discussion_report.py",
+    "backend/imap_fetch.py",
+    "backend/intake.py",
+    "backend/mail_threading.py",
+    "backend/mailer.py",
+    "backend/monthly_report.py",
+    "backend/school_statistics.py",
+    "backend/store.py",
+    "backend/tests/test_auto_receipt.py",
+    "backend/tests/test_confirmation.py",
+    "backend/tests/test_monthly.py",
+    "backend/tests/test_paired_monthly.py",
+    "backend/tests/test_reply_members.py",
+    "backend/tests/test_school_filter.py",
+    "backend/tests/test_school_statistics.py",
+    "frontend/src/MonthlyReports.tsx"
+  ]
+}

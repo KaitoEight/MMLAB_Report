@@ -1,0 +1,25 @@
+{
+  "new_files": [
+    "backend/receipt_policy.py",
+    "backend/tests/test_auto_receipt.py"
+  ],
+  "changed_files": [
+    "backend/admin_reports.py",
+    "backend/intake.py",
+    "backend/main.py",
+    "backend/monthly_report.py",
+    "backend/monthly_service.py",
+    "backend/receipt_policy.py",
+    "backend/store.py",
+    "backend/tests/test_admin_confirmation.py",
+    "backend/tests/test_auto_receipt.py",
+    "backend/tests/test_confirmation.py",
+    "backend/tests/test_monthly.py",
+    "backend/tests/test_task_assembly.py",
+    "frontend/src/Dashboard.tsx",
+    "frontend/src/MonthlyReports.tsx",
+    "frontend/src/PaperActions.tsx",
+    "frontend/src/PaperConfirm.tsx",
+    "frontend/src/lib/research.ts"
+  ]
+}
