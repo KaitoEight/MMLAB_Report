@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Xác nhận Paper — người gửi hoặc admin
 
 Trong bảng **Báo cáo**, mỗi dòng Paper có nút **Xác nhận** ở cột Thao tác. Bấm nút đó hoặc tiêu đề Paper để mở phần **Xác nhận thông tin Paper**:
@@ -161,3 +162,6 @@ python -m pytest tests -q
 ```
 
 Cài `backend/requirements-dev.txt` nếu muốn chạy test. Test giao diện xử lý lỗi: `node scripts/test_api_errors.cjs`. Smoke native: `python scripts/smoke_local.py`.
+=======
+23560056
+>>>>>>> 7d8b3d32e37d57bbb3f356c1bd45e50e3337c878

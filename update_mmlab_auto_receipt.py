@@ -65,7 +65,11 @@ PATCH = r'''--- a/backend/admin_reports.py
 -             'Thông tin hệ thống trích xuất (chưa được bạn xác nhận):', 'Type of Report: Paper']
 -    lines += [f"{LABELS[key]}: {row['fields'][key] or '[CẦN BỔ SUNG]'}" for key in FIELDS]
 +    lines = ['Chào bạn,', '', 'MMLab đã tự động ghi nhận Paper bạn chuyển tiếp.',
+<<<<<<< HEAD
 +             'Dưới đây là thông tin đã được lưu:',
+=======
++             'Bạn không cần xác nhận lại. Dưới đây là thông tin đã được lưu:',
+>>>>>>> 7d8b3d32e37d57bbb3f356c1bd45e50e3337c878
 +             f"Mã tiếp nhận: {row['id'][:12]}", '', 'Type of Report: Paper']
 +    lines += [f"{LABELS[key]}: {row['fields'][key] or '[CHƯA CÓ THÔNG TIN]'}" for key in FIELDS]
 +    lines += ['Status: ' + (row['original'].get('status') or 'Chưa xác định')]

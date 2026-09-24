@@ -8,9 +8,12 @@ from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.oxml.ns import qn
 from mmlab_pipeline.members import fold
 from monthly_assembly import assemble, TOPICS
+<<<<<<< HEAD
 from monthly_layout import paired_report, LAYOUT
 from school_report import school_projection, with_statistics
 from school_statistics import prior_papers
+=======
+>>>>>>> 7d8b3d32e37d57bbb3f356c1bd45e50e3337c878
 
 VN=timezone(timedelta(hours=7))
 SECTIONS=('a1','a2','aOther','b1','b2','bOther','recommendations')
@@ -40,13 +43,29 @@ def useful(lines):
 
 def compose(records, period):
     validate_period(period)
+<<<<<<< HEAD
     return with_statistics({**assemble(records,period,SECTIONS,DEFAULT_STRATEGY,work_key),'layoutVersion':LAYOUT,'paperHistory':prior_papers(records,period)})
+=======
+    return assemble(records,period,SECTIONS,DEFAULT_STRATEGY,work_key)
+>>>>>>> 7d8b3d32e37d57bbb3f356c1bd45e50e3337c878
 
 
 def docx_bytes(report, variant):
     if variant not in ('discussion','school'):raise ValueError('Unknown report variant')
+<<<<<<< HEAD
     report=school_projection(report) if variant=='school' else paired_report(report)
     if report['strategyLabel']=='KHCL Trường giai đoạn 2021-2025':report['strategyLabel']=DEFAULT_STRATEGY
+=======
+    # Work on a copy: rendering must not mutate the admin's saved draft.
+    report={**report,'sections':dict(report['sections'])}
+    if report['strategyLabel']=='KHCL Trường giai đoạn 2021-2025':report['strategyLabel']=DEFAULT_STRATEGY
+    if variant=='school':
+        # Only explicitly tagged strategic tasks enter A.1/B.1.
+        # Other tasks are regular work; preserve their source text.
+        for phase in ('a','b'):
+            report['sections'][phase+'2']='\n'.join(filter(None,[report['sections'].get(phase+'2','').strip(),report['sections'].get(phase+'Other','').strip()]))
+            report['sections'][phase+'Other']=''
+>>>>>>> 7d8b3d32e37d57bbb3f356c1bd45e50e3337c878
     doc=Document(); sec=doc.sections[0]
     sec.page_width=Cm(21);sec.page_height=Cm(29.7)
     sec.top_margin=Cm(2);sec.bottom_margin=Cm(2);sec.left_margin=Cm(2.5);sec.right_margin=Cm(2)
@@ -76,6 +95,7 @@ def docx_bytes(report, variant):
     paragraph('BÁO CÁO CÔNG TÁC'+(' THÁNG …/……' if template else f' THÁNG {m:02d}/{y}'),True,True)
     if not template:
         paragraph(f"Kết quả tháng {report['period'][5:]}/{report['period'][:4]} và kế hoạch tháng {m:02d}/{y}",center=True)
+<<<<<<< HEAD
     if variant=='school' and report.get('paperScope')=='year':
         paragraph(f"Số liệu bài báo: lũy kế năm {report['period'][:4]} đến {report['period'][5:]}/{report['period'][:4]}.")
     def section(key,title):
@@ -88,6 +108,14 @@ def docx_bytes(report, variant):
                 paragraph('Đề nghị phần này CHỈ báo cáo những nội dung KHCL nào có trong Kế hoạch tại https://link.uit.edu.vn/KH2026, báo cáo ngắn gọn 1–2 dòng.')
             if key in ('b1','b2'):
                 paragraph('Lưu ý đối chiếu với Kế hoạch Trường 2026 đã xây dựng tại https://link.uit.edu.vn/KH2026')
+=======
+    def section(key,title):
+        if variant!='school' and not template and not report['sections'].get(key,'').strip():return
+        if template and key=='b1' and variant=='discussion':doc.add_page_break()
+        doc.add_heading(title,level=1)
+        if key in ('a1','b1','b2'):
+            paragraph(PLAN_REFERENCE)
+>>>>>>> 7d8b3d32e37d57bbb3f356c1bd45e50e3337c878
         text=report['sections'].get(key,'').strip()
         for line in text.splitlines() if text else ['…' if template else 'Chưa có nội dung được ghi nhận.']:
             if line.rstrip(':') in TOPICS:
@@ -98,6 +126,7 @@ def docx_bytes(report, variant):
                     p.paragraph_format.left_indent=Cm(.35)
                     p.paragraph_format.first_line_indent=Cm(-.35)
                     p.runs[0].text='• '+line
+<<<<<<< HEAD
     if variant=='school':
         section('a1',f"Phần A.1: Báo cáo tình hình thực hiện nhiệm vụ phục vụ {report['strategyLabel']} trong tháng trước")
         section('a2','Phần A.2: Báo cáo tình hình thực hiện nhiệm vụ thường xuyên và đột xuất khác trong tháng trước')
@@ -112,6 +141,20 @@ def docx_bytes(report, variant):
                 doc.add_heading(label, level=2)
                 for line in member[phase] or ['Chưa có nội dung được ghi nhận.']:
                     paragraph('• ' + line)
+=======
+    if variant in ('discussion','school'):
+        section('a1',f"Phần A.1: Tình hình thực hiện nhiệm vụ phục vụ {report['strategyLabel']} trong tháng trước")
+        section('a2','Phần A.2: Tình hình thực hiện nhiệm vụ thường xuyên và đột xuất trong tháng trước')
+        if report['sections'].get('aOther'):section('aOther', 'Phần A: Kết quả công tác trong tháng trước' if not report['sections'].get('a1') and not report['sections'].get('a2') else 'Nội dung thực hiện bổ sung')
+    section('b1',f"Phần B.1: Kế hoạch công tác các nhiệm vụ phục vụ {report['strategyLabel']} trong tháng này")
+    section('b2','Phần B.2: Kế hoạch công tác các nhiệm vụ thường xuyên và đột xuất trong tháng này')
+    if report['sections'].get('bOther'):section('bOther','Phần B: Kế hoạch công tác trong tháng này' if not report['sections'].get('b1') and not report['sections'].get('b2') else 'Nhiệm vụ dự kiến bổ sung')
+    if variant=='discussion' and report.get('reviewNotes'):
+        doc.add_heading('Nội dung cần bổ sung để hoàn thiện báo cáo',level=1)
+        for note in report['reviewNotes']:paragraph(note)
+    if variant=='school' or template or report['sections'].get('recommendations','').strip():
+        section('recommendations','Phần 3: Các kiến nghị')
+>>>>>>> 7d8b3d32e37d57bbb3f356c1bd45e50e3337c878
     if doc.paragraphs:doc.paragraphs[-1].paragraph_format.keep_with_next=True
     p=paragraph('Trưởng đơn vị\n(Ký và ghi rõ họ tên)\n\n'+report['signatory'],True)
     p.alignment=WD_ALIGN_PARAGRAPH.RIGHT
@@ -123,7 +166,24 @@ def docx_bytes(report, variant):
 def blank_template(variant):
     report=compose([], '2026-09')
     report['isTemplate']=True
+<<<<<<< HEAD
     done=['KPI bài báo: …','KPI NCS: …','Đề tài NCKH: …']
     plans=['KPI bài báo: …','KPI NCS: …','Đề tài NCKH: …']
+=======
+    done=['Được chấp nhận … bài báo hội nghị rank A*/A/B/C/Scopus',
+          'Được chấp nhận … bài báo tạp chí ISI/Scopus Q1/Q2/Q3/Q4',
+          'Đã nộp … bài báo hội nghị rank A*/A/B/C/Scopus',
+          'Đã nộp … bài báo tạp chí ISI/Scopus Q1/Q2/Q3/Q4',
+          'Hoàn tất đăng ký … đề tài NCKH cấp cơ sở/cấp ĐHQG/NAFOSTED',
+          'Hoàn tất nghiệm thu … đề tài NCKH cấp cơ sở/cấp ĐHQG/NAFOSTED',
+          '… NCS đã hoàn thành nhập học/báo cáo CĐ 1/CĐ 2/CĐ 3/TLTQ/Seminar/ĐVCM/Cấp Trường',
+          'Đã thực hiện báo cáo … seminar học thuật tại PTN', 'Đã đạt thành tích giải thưởng …']
+    plans=['Sẽ nộp … bài báo hội nghị rank A*/A/B/C/Scopus',
+           'Sẽ nộp … bài báo tạp chí ISI/Scopus Q1/Q2/Q3/Q4',
+           'Sẽ đăng ký … đề tài NCKH cấp cơ sở/cấp ĐHQG/NAFOSTED',
+           'Sẽ nghiệm thu … đề tài NCKH cấp cơ sở/cấp ĐHQG/NAFOSTED',
+           '… NCS sẽ nhập học/báo cáo CĐ 1/CĐ 2/CĐ 3/TLTQ/Seminar/ĐVCM/Cấp Trường',
+           'Sẽ thực hiện … seminar học thuật tại PTN', 'Dự kiến tham gia giải thưởng/cuộc thi …']
+>>>>>>> 7d8b3d32e37d57bbb3f356c1bd45e50e3337c878
     report['sections'].update(a1='\n'.join(done),a2='\n'.join(done),b1='\n'.join(plans),b2='\n'.join(plans),recommendations='…')
     return docx_bytes(report,variant)

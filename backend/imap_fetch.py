@@ -134,7 +134,10 @@ def analyze(raw: bytes, source_id: str, received_at: str) -> dict:
         'index': data.get('index') or None, 'memberIds': [p['id'] for p in people],
         'source': 'gmail', 'forwarded': has_forward, 'issues': list(dict.fromkeys(issues)),
         'sourceId': source_id, 'messageId': str(message.get('Message-ID', '')),
+<<<<<<< HEAD
         'replyReferences': ' '.join(str(v) for v in (message.get_all('References', []) or message.get_all('In-Reply-To', [])))[:32000],
+=======
+>>>>>>> 7d8b3d32e37d57bbb3f356c1bd45e50e3337c878
         'sender': sender, 'subject': subject, 'isValid': result['is_valid'],
         'missingFields': result['missing_fields'], 'invalidFields': result['invalid_fields'],
         'warnings': result['warnings'], 'mappingEvidence': result['mapping_evidence'],

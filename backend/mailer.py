@@ -26,11 +26,18 @@ def deliver(row):
     message['Message-ID'] = f"<mmlab-{row['id']}-{payload.get('delivery_id','initial')}@{mailbox().split('@')[1]}>"
     message['Auto-Submitted'] = 'auto-replied'
     message['X-Auto-Response-Suppress'] = 'All'
+<<<<<<< HEAD
     from mail_threading import reply_headers
     thread = reply_headers({'messageId':payload.get('in_reply_to'), 'replyReferences':payload.get('references')})
     if thread['in_reply_to']:
         message['In-Reply-To'] = thread['in_reply_to']
         message['References'] = thread['references']
+=======
+    ref = payload.get('in_reply_to', '')
+    if re.fullmatch(r'<[^<>\s]{1,990}>', ref):
+        message['In-Reply-To'] = ref
+        message['References'] = ref
+>>>>>>> 7d8b3d32e37d57bbb3f356c1bd45e50e3337c878
     message.set_content(payload['body'])
     for attachment in payload.get('attachments', []):
         message.add_attachment(base64.b64decode(attachment['content']),maintype='application',subtype=attachment['subtype'],filename=attachment['name'])
